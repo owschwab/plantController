@@ -57,7 +57,7 @@ float pressPA;
 int pressMG;
 int humidRH;
 
-float subValue;
+bool subValue;
 bool status;
 
 void MQTT_connect();
@@ -125,10 +125,13 @@ void setup() {
     }
 
     WiFi.on();
-    WiFi.setCredentials("XXX_Finititty", "StraightHaus");
-    WiFi.connect();
+    
 
-    MQTT_connect();
+    //WiFi.setCredentials("XXX_Finititty", "StraightHaus");
+    WiFi.connect();
+    while(WiFi.connecting()) {
+        Serial.printf(".");
+    }
 
     mqtt.subscribe(&subFeed);   
 
@@ -146,23 +149,26 @@ void setup() {
 
 
 void loop() {
+    MQTT_connect();
     MQTT_ping();
+
 
     Adafruit_MQTT_Subscribe *subscription;
     while ((subscription = mqtt.readSubscription(100))) {
         if (subscription == &subFeed) {
-        subValue = atof((char *)subFeed.lastread);
-        }
-        if(subValue) {
-        onOFF=!onOFF;
-        Serial.printf("switch revieved\n");
+        subValue = atoi((char *)subFeed.lastread);
+        Serial.printf("\nswitch revieved\n Value: %d\n", subValue);
         }
 
+        onOFF=subValue;
+        Serial.printf("\nswitch revieved\n onOFF value; %d\n", onOFF);
+        
         if(onOFF) {
             digitalWrite(PUMPPIN, HIGH);
             display.clearDisplay();
             display.setCursor(10,10);
-            display.printf("PUMP IT!");
+            display.printf("PUMP IT!"); 
+            Serial.printf("PUMP IT!\n");  
             display.display();
             pixelFill(0,12,0x00FF00);
             currentTime = millis();
@@ -249,10 +255,10 @@ void loop() {
     }
     
     if(soilMoisture < 2500 && sensorVal < 500) {
-        digitalWrite(PUMPPIN, LOW);
+        // digitalWrite(PUMPPIN, LOW);
 
-        pixel.clear();
-        pixel.show();
+        // pixel.clear();
+        // pixel.show();
         //display.display();
         //display.clearDisplay();
         display.setTextSize(2);
